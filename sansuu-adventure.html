@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>さんすうアドベンチャー</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #4FC3F7;
+    --sky-dark: #0288D1;
+    --sun: #FFD600;
+    --grass: #66BB6A;
+    --ground: #8D6E63;
+    --hero: #FF7043;
+    --purple: #AB47BC;
+    --pink: #EC407A;
+    --gold: #FFD700;
+    --white: #FFFFFF;
+    --dark: #1A1A2E;
+    --card-bg: rgba(255,255,255,0.95);
+    --shadow: 0 8px 32px rgba(0,0,0,0.18);
+    --radius: 24px;
+    --radius-sm: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', 'Noto Sans JP', sans-serif;
+    background: linear-gradient(180deg, #87CEEB 0%, #B3E5FC 40%, #C8E6C9 70%, #A5D6A7 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
+  /* Clouds */
+  .clouds { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; z-index: 0; }
+  .cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.85;
+    animation: floatCloud linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+  .cloud-1 { width: 100px; height: 35px; top: 8%; animation-duration: 35s; animation-delay: 0s; left: -120px; }
+  .cloud-1::before { width: 55px; height: 55px; top: -28px; left: 15px; }
+  .cloud-1::after  { width: 40px; height: 40px; top: -20px; left: 45px; }
+  .cloud-2 { width: 80px; height: 28px; top: 18%; animation-duration: 50s; animation-delay: -15s; left: -100px; }
+  .cloud-2::before { width: 45px; height: 45px; top: -22px; left: 12px; }
+  .cloud-2::after  { width: 32px; height: 32px; top: -16px; left: 38px; }
+  .cloud-3 { width: 120px; height: 40px; top: 5%; animation-duration: 42s; animation-delay: -22s; left: -140px; }
+  .cloud-3::before { width: 65px; height: 65px; top: -32px; left: 20px; }
+  .cloud-3::after  { width: 50px; height: 50px; top: -25px; left: 55px; }
+  @keyframes floatCloud { from { transform: translateX(-150px); } to { transform: translateX(110vw); } }
+
+  /* Stars bg */
+  .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; display: none; }
+  body.night .stars { display: block; }
+  body.night { background: linear-gradient(180deg, #0D1B2A 0%, #1B2838 50%, #1A3A2A 80%, #0F2018 100%); }
+
+  /* SCREENS */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+    z-index: 10;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+
+  /* ==================== TITLE SCREEN ==================== */
+  #titleScreen { gap: 24px; }
+
+  .title-hero {
+    font-size: clamp(42px, 10vw, 72px);
+    font-weight: 900;
+    color: var(--white);
+    text-shadow: 0 4px 0 #1565C0, 0 8px 0 rgba(0,0,0,0.15);
+    letter-spacing: -1px;
+    text-align: center;
+    line-height: 1.1;
+    animation: titleBounce 2s ease-in-out infinite;
+  }
+  @keyframes titleBounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .subtitle { font-size: 18px; color: #E3F2FD; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+  .character-display {
+    font-size: 80px;
+    animation: heroFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+  }
+  @keyframes heroFloat {
+    0%,100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-12px) rotate(5deg); }
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, #FF6B35, #FF4500);
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+    padding: 20px 60px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 0 #B71C1C, 0 12px 24px rgba(255,69,0,0.4);
+    transition: all 0.15s;
+    font-family: inherit;
+    letter-spacing: 1px;
+  }
+  .btn-start:active { transform: translateY(4px); box-shadow: 0 4px 0 #B71C1C, 0 6px 12px rgba(255,69,0,0.4); }
+
+  .points-badge {
+    background: linear-gradient(135deg, #FFD700, #FFA000);
+    border-radius: 50px;
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 12px rgba(255,160,0,0.4);
+    font-size: 22px; font-weight: 900; color: #4A2800;
+  }
+
+  /* ==================== STAGE SELECT ==================== */
+  #stageScreen { justify-content: flex-start; padding-top: 30px; gap: 16px; overflow-y: auto; }
+
+  .screen-title {
+    font-size: 28px; font-weight: 900; color: var(--dark);
+    background: var(--card-bg);
+    padding: 12px 32px; border-radius: 50px;
+    box-shadow: var(--shadow);
+  }
+
+  .world-section { width: 100%; max-width: 600px; }
+
+  .world-label {
+    font-size: 20px; font-weight: 900;
+    padding: 8px 20px; border-radius: 50px;
+    margin-bottom: 12px; display: inline-block;
+  }
+  .world-1 .world-label { background: #E3F2FD; color: #1565C0; }
+  .world-2 .world-label { background: #FCE4EC; color: #AD1457; }
+  .world-3 .world-label { background: #F3E5F5; color: #6A1B9A; }
+
+  .stages-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    padding: 0 4px;
+  }
+
+  .stage-btn {
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    border: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 900;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stage-btn.locked {
+    background: #CFD8DC; color: #90A4AE;
+    box-shadow: 0 4px 0 #B0BEC5;
+    cursor: not-allowed;
+  }
+  .stage-btn.available {
+    background: linear-gradient(135deg, #42A5F5, #1976D2);
+    color: white;
+    box-shadow: 0 6px 0 #0D47A1, 0 8px 16px rgba(25,118,210,0.4);
+  }
+  .stage-btn.available:active { transform: translateY(3px); box-shadow: 0 3px 0 #0D47A1; }
+  .stage-btn.cleared {
+    background: linear-gradient(135deg, #66BB6A, #388E3C);
+    color: white;
+    box-shadow: 0 6px 0 #1B5E20, 0 8px 16px rgba(56,142,60,0.4);
+  }
+  .stage-btn.cleared:active { transform: translateY(3px); box-shadow: 0 3px 0 #1B5E20; }
+  .stage-num { font-size: 18px; }
+  .stage-icon { font-size: 20px; }
+  .stage-stars { font-size: 12px; letter-spacing: -2px; }
+
+  /* ==================== GAME SCREEN ==================== */
+  #gameScreen { gap: 16px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+  .game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%;
+    background: var(--card-bg);
+    border-radius: 50px;
+    padding: 10px 20px;
+    box-shadow: var(--shadow);
+  }
+  .stage-info { font-size: 16px; font-weight: 900; color: var(--dark); }
+  .progress-dots { display: flex; gap: 6px; }
+  .dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #CFD8DC; transition: all 0.3s;
+  }
+  .dot.done { background: var(--sun); box-shadow: 0 0 8px rgba(255,214,0,0.6); }
+  .dot.current { background: var(--hero); box-shadow: 0 0 8px rgba(255,112,67,0.6); transform: scale(1.2); }
+
+  .question-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .question-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, #FF6B35, #FFD600, #4FC3F7, #AB47BC);
+  }
+
+  .question-emoji { font-size: 48px; margin-bottom: 8px; animation: wiggle 2s ease-in-out infinite; }
+  @keyframes wiggle {
+    0%,100%,30%,60% { transform: rotate(0deg); }
+    15% { transform: rotate(-10deg); }
+    45% { transform: rotate(10deg); }
+  }
+
+  .question-text {
+    font-size: clamp(36px, 8vw, 56px);
+    font-weight: 900;
+    color: var(--dark);
+    letter-spacing: 4px;
+    margin: 8px 0;
+  }
+  .answer-box {
+    display: inline-block;
+    min-width: 80px; height: 70px;
+    border-bottom: 4px solid var(--dark);
+    font-size: 52px; font-weight: 900;
+    color: var(--hero);
+    line-height: 70px;
+    margin-left: 8px;
+    transition: all 0.2s;
+  }
+  .answer-box.filled { border-color: var(--hero); }
+
+  .feedback-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: var(--radius);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    font-size: 48px; font-weight: 900;
+    gap: 8px;
+  }
+  .feedback-overlay.show { opacity: 1; }
+  .feedback-overlay.correct { background: rgba(102,187,106,0.92); color: white; }
+  .feedback-overlay.wrong { background: rgba(239,83,80,0.92); color: white; }
+  .feedback-text { font-size: 28px; }
+
+  /* Number pad */
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .num-btn {
+    height: 80px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 36px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.12s;
+    position: relative;
+    overflow: hidden;
+  }
+  .num-btn:nth-child(odd) {
+    background: linear-gradient(135deg, #42A5F5, #1E88E5);
+    color: white;
+    box-shadow: 0 5px 0 #1565C0;
+  }
+  .num-btn:nth-child(even) {
+    background: linear-gradient(135deg, #AB47BC, #8E24AA);
+    color: white;
+    box-shadow: 0 5px 0 #6A1B9A;
+  }
+  .num-btn:active { transform: translateY(3px) scale(0.97); }
+  .num-btn:nth-child(odd):active { box-shadow: 0 2px 0 #1565C0; }
+  .num-btn:nth-child(even):active { box-shadow: 0 2px 0 #6A1B9A; }
+  .num-btn.del-btn {
+    background: linear-gradient(135deg, #EF5350, #E53935) !important;
+    box-shadow: 0 5px 0 #B71C1C !important;
+    font-size: 28px;
+    grid-column: span 2;
+  }
+
+  .btn-submit {
+    width: 100%;
+    height: 70px;
+    background: linear-gradient(135deg, #FF6B35, #FF4500);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 26px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #B71C1C;
+    transition: all 0.12s;
+    letter-spacing: 2px;
+  }
+  .btn-submit:active { transform: translateY(3px); box-shadow: 0 3px 0 #B71C1C; }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ==================== CLEAR SCREEN ==================== */
+  #clearScreen { gap: 20px; }
+
+  .clear-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .clear-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: linear-gradient(90deg, var(--gold), #FF6B35, var(--gold));
+  }
+
+  .clear-title {
+    font-size: 40px; font-weight: 900;
+    background: linear-gradient(135deg, #FFD700, #FF6B35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin: 12px 0;
+  }
+  .clear-emoji { font-size: 80px; animation: celebrate 0.5s ease-in-out infinite alternate; }
+  @keyframes celebrate { from { transform: scale(1) rotate(-10deg); } to { transform: scale(1.15) rotate(10deg); } }
+
+  .stars-earned { font-size: 48px; letter-spacing: 4px; margin: 8px 0; }
+  .points-earned {
+    background: linear-gradient(135deg, #FFD700, #FFA000);
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-size: 26px; font-weight: 900; color: #4A2800;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(255,160,0,0.4);
+  }
+
+  .btn-next {
+    width: 100%;
+    height: 64px;
+    background: linear-gradient(135deg, #66BB6A, #388E3C);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 22px; font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #1B5E20;
+    transition: all 0.12s;
+  }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 2px 0 #1B5E20; }
+
+  .btn-shop {
+    width: 100%;
+    height: 64px;
+    background: linear-gradient(135deg, #FFD700, #FFA000);
+    color: #4A2800;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 22px; font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #E65100;
+    transition: all 0.12s;
+  }
+  .btn-shop:active { transform: translateY(3px); box-shadow: 0 2px 0 #E65100; }
+
+  /* ==================== SHOP SCREEN ==================== */
+  #shopScreen { justify-content: flex-start; padding-top: 20px; gap: 16px; overflow-y: auto; }
+
+  .shop-header {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; max-width: 600px;
+  }
+
+  .shop-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    width: 100%; max-width: 600px; padding-bottom: 20px;
+  }
+
+  .shop-item {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .shop-item:active { transform: scale(0.97); }
+  .shop-item.owned { border-color: var(--grass); }
+  .shop-item.owned::after {
+    content: '✅ もってる！';
+    position: absolute; top: 8px; right: 8px;
+    background: var(--grass); color: white;
+    font-size: 10px; font-weight: 900;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .shop-item.cant-afford { opacity: 0.7; }
+
+  .item-emoji { font-size: 52px; margin-bottom: 8px; }
+  .item-name { font-size: 16px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
+  .item-desc { font-size: 12px; color: #607D8B; margin-bottom: 12px; }
+  .item-price {
+    background: linear-gradient(135deg, #FFD700, #FFA000);
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 16px; font-weight: 900; color: #4A2800;
+    display: inline-block;
+  }
+
+  /* ==================== HERO SCREEN ==================== */
+  #heroScreen { gap: 16px; }
+
+  .hero-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    max-width: 500px; width: 100%;
+  }
+
+  .hero-display { font-size: 80px; position: relative; display: inline-block; }
+  .hero-equipment { position: absolute; font-size: 32px; }
+  .eq-hat { top: -20px; left: 50%; transform: translateX(-50%); }
+  .eq-sword { bottom: -5px; right: -20px; }
+  .eq-shield { bottom: -5px; left: -20px; }
+  .eq-cape { top: 10px; right: -25px; font-size: 28px; }
+  .eq-boots { bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 24px; }
+
+  .stat-bars { text-align: left; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .stat-row { display: flex; align-items: center; gap: 10px; }
+  .stat-label { font-size: 14px; font-weight: 900; color: #607D8B; width: 50px; }
+  .stat-bar-wrap { flex: 1; height: 16px; background: #E0E0E0; border-radius: 8px; overflow: hidden; }
+  .stat-bar { height: 100%; border-radius: 8px; transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
+  .stat-bar.hp  { background: linear-gradient(90deg, #EF5350, #FF8A80); }
+  .stat-bar.atk { background: linear-gradient(90deg, #FF6B35, #FFD600); }
+  .stat-bar.def { background: linear-gradient(90deg, #42A5F5, #80D8FF); }
+  .stat-value { font-size: 14px; font-weight: 900; color: var(--dark); width: 30px; text-align: right; }
+
+  .equipped-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: center; }
+  .equipped-chip {
+    background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 14px; font-weight: 700; color: #1565C0;
+  }
+
+  /* NAV */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card-bg);
+    display: flex;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    z-index: 100;
+    border-radius: 24px 24px 0 0;
+  }
+  .nav-btn {
+    flex: 1; padding: 12px 8px; border: none; background: none;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .nav-btn.active .nav-icon { transform: scale(1.2); }
+  .nav-icon { font-size: 28px; transition: transform 0.15s; }
+  .nav-label { font-size: 10px; font-weight: 900; color: #90A4AE; }
+  .nav-btn.active .nav-label { color: var(--hero); }
+
+  /* Confetti */
+  .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 200; overflow: hidden; }
+  .confetto {
+    position: absolute;
+    width: 10px; height: 14px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.85); color: white;
+    padding: 12px 28px; border-radius: 50px;
+    font-size: 16px; font-weight: 900;
+    z-index: 300;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 1.7s forwards;
+  }
+  @keyframes toastIn  { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+  /* Pulse ring for current stage */
+  .stage-btn.available::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: inherit;
+    border: 3px solid rgba(255,255,255,0.8);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+
+  .back-btn {
+    background: var(--card-bg); border: none; border-radius: 50px;
+    padding: 10px 20px; font-family: inherit; font-size: 16px; font-weight: 900;
+    cursor: pointer; box-shadow: var(--shadow); color: var(--dark);
+    align-self: flex-start;
+  }
+</style>
+</head>
+<body>
+<div class="clouds">
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+</div>
+
+<!-- CONFETTI -->
+<div class="confetti-container" id="confetti"></div>
+
+<!-- ==================== TITLE ==================== -->
+<div class="screen" id="titleScreen">
+  <div class="character-display" id="titleChar">🧒</div>
+  <div class="title-hero">さんすう<br>アドベンチャー</div>
+  <div class="subtitle">1ねんせいの さんすうを おぼえよう！</div>
+  <div class="points-badge">⭐ <span id="titlePoints">0</span> ポイント</div>
+  <button class="btn-start" onclick="showScreen('stageScreen')">スタート ▶</button>
+  <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:8px;">
+    タップして はじめよう！
+  </div>
+</div>
+
+<!-- ==================== STAGE SELECT ==================== -->
+<div class="screen hidden" id="stageScreen">
+  <div class="screen-title">🗺️ ステージえらび</div>
+
+  <div class="world-section world-1">
+    <div class="world-label">🌟 ワールド1：たしざん</div>
+    <div class="stages-grid" id="world1Grid"></div>
+  </div>
+
+  <div class="world-section world-2" style="margin-top:12px;">
+    <div class="world-label">🔥 ワールド2：ひきざん</div>
+    <div class="stages-grid" id="world2Grid"></div>
+  </div>
+
+  <div style="height: 80px;"></div>
+</div>
+
+<!-- ==================== GAME ==================== -->
+<div class="screen hidden" id="gameScreen">
+  <div class="game-header">
+    <button class="back-btn" onclick="showScreen('stageScreen')" style="padding:6px 14px;font-size:14px;">← もどる</button>
+    <div class="stage-info" id="stageLabel">1-1</div>
+    <div class="points-badge" style="padding:6px 14px;font-size:16px;">⭐ <span id="gamePoints">0</span></div>
+  </div>
+
+  <div class="progress-dots" id="progressDots"></div>
+
+  <div class="question-card" id="questionCard">
+    <div class="question-emoji" id="qEmoji">🍎</div>
+    <div class="question-text" id="questionText">
+      3 + 4 = <span class="answer-box" id="answerBox">＿</span>
+    </div>
+    <div class="feedback-overlay" id="feedbackOverlay">
+      <span id="feedbackEmoji">✅</span>
+      <span class="feedback-text" id="feedbackText">せいかい！</span>
+    </div>
+  </div>
+
+  <div class="numpad" id="numpad">
+    <button class="num-btn" onclick="inputNum(1)">1</button>
+    <button class="num-btn" onclick="inputNum(2)">2</button>
+    <button class="num-btn" onclick="inputNum(3)">3</button>
+    <button class="num-btn" onclick="inputNum(4)">4</button>
+    <button class="num-btn" onclick="inputNum(5)">5</button>
+    <button class="num-btn" onclick="inputNum(6)">6</button>
+    <button class="num-btn" onclick="inputNum(7)">7</button>
+    <button class="num-btn" onclick="inputNum(8)">8</button>
+    <button class="num-btn" onclick="inputNum(9)">9</button>
+    <button class="num-btn" onclick="inputNum(0)">0</button>
+    <button class="num-btn del-btn" onclick="deleteNum()">⌫ けす</button>
+  </div>
+
+  <button class="btn-submit" id="submitBtn" onclick="submitAnswer()" disabled>こたえる ✔</button>
+</div>
+
+<!-- ==================== CLEAR ==================== -->
+<div class="screen hidden" id="clearScreen">
+  <div class="clear-card">
+    <div class="clear-emoji">🎉</div>
+    <div class="clear-title">クリア！</div>
+    <div class="stars-earned" id="starsEarned">⭐⭐⭐</div>
+    <div style="font-size:16px;color:#607D8B;margin:8px 0;">かくとくポイント</div>
+    <div class="points-earned">+<span id="clearPoints">20</span> ポイント ⭐</div>
+    <div style="height:16px;"></div>
+    <button class="btn-next" onclick="nextStage()">つぎのステージへ ▶</button>
+    <div style="height:10px;"></div>
+    <button class="btn-shop" onclick="showScreen('shopScreen')">🛍️ ショップへいく</button>
+    <div style="height:10px;"></div>
+    <button class="btn-next" style="background:linear-gradient(135deg,#42A5F5,#1976D2);box-shadow:0 5px 0 #0D47A1;" onclick="showScreen('stageScreen')">ステージえらびにもどる</button>
+  </div>
+</div>
+
+<!-- ==================== SHOP ==================== -->
+<div class="screen hidden" id="shopScreen">
+  <div class="shop-header">
+    <div class="screen-title">🛍️ ショップ</div>
+    <div class="points-badge">⭐ <span id="shopPoints">0</span></div>
+  </div>
+  <div class="shop-grid" id="shopGrid"></div>
+  <div style="height: 90px;"></div>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<div class="screen hidden" id="heroScreen">
+  <div class="hero-card">
+    <div class="screen-title" style="margin-bottom:16px;">⚔️ ぼうけんしゃ</div>
+    <div style="position:relative;display:inline-block;margin:10px 0;">
+      <div class="hero-display" id="heroEmoji">🧒</div>
+      <div class="hero-equipment eq-hat" id="eqHat"></div>
+      <div class="hero-equipment eq-sword" id="eqSword"></div>
+      <div class="hero-equipment eq-shield" id="eqShield"></div>
+      <div class="hero-equipment eq-cape" id="eqCape"></div>
+      <div class="hero-equipment eq-boots" id="eqBoots"></div>
+    </div>
+
+    <div class="stat-bars">
+      <div class="stat-row">
+        <div class="stat-label">HP</div>
+        <div class="stat-bar-wrap"><div class="stat-bar hp" id="statHp" style="width:40%"></div></div>
+        <div class="stat-value" id="statHpVal">40</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">こうげき</div>
+        <div class="stat-bar-wrap"><div class="stat-bar atk" id="statAtk" style="width:20%"></div></div>
+        <div class="stat-value" id="statAtkVal">20</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">ぼうぎょ</div>
+        <div class="stat-bar-wrap"><div class="stat-bar def" id="statDef" style="width:10%"></div></div>
+        <div class="stat-value" id="statDefVal">10</div>
+      </div>
+    </div>
+
+    <div class="equipped-list" id="equippedList"></div>
+  </div>
+  <div style="height: 80px;"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="nav-btn active" id="nav-stage" onclick="navTo('stageScreen','nav-stage')">
+    <span class="nav-icon">🗺️</span>
+    <span class="nav-label">ステージ</span>
+  </button>
+  <button class="nav-btn" id="nav-hero" onclick="navTo('heroScreen','nav-hero')">
+    <span class="nav-icon">⚔️</span>
+    <span class="nav-label">ぼうけんしゃ</span>
+  </button>
+  <button class="nav-btn" id="nav-shop" onclick="navTo('shopScreen','nav-shop')">
+    <span class="nav-icon">🛍️</span>
+    <span class="nav-label">ショップ</span>
+  </button>
+</nav>
+
+<script>
+// ==================== DATA ====================
+const STAGE_DATA = {
+  1: {
+    name: 'ワールド1：たしざん',
+    stages: [
+      { id:'1-1', label:'1-1', emoji:'🍎', pts:10, qType: 'easy' },
+      { id:'1-2', label:'1-2', emoji:'🐥', pts:12, qType: 'medium_no_carry' },
+      { id:'1-3', label:'1-3', emoji:'🌸', pts:15, qType: 'make_10' },
+      { id:'1-4', label:'1-4', emoji:'⭐', pts:15, qType: 'carry_10' },
+      { id:'1-5', label:'1-5', emoji:'🎈', pts:18, qType: 'mix_1digit' },
+      { id:'1-6', label:'1-6', emoji:'🦊', pts:20, qType: '2digit_1digit_no_carry' },
+      { id:'1-7', label:'1-7', emoji:'🌈', pts:22, qType: '2digit_1digit_carry' },
+      { id:'1-8', label:'1-8', emoji:'🏆', pts:30, qType: 'mix_all' },
+    ]
+  },
+  2: {
+    name: 'ワールド2：ひきざん',
+    stages: [
+      { id:'2-1', label:'2-1', emoji:'🍌', pts:12, qType: 'easy' },
+      { id:'2-2', label:'2-2', emoji:'🐇', pts:14, qType: 'medium_no_borrow' },
+      { id:'2-3', label:'2-3', emoji:'🌺', pts:15, qType: 'from_10' },
+      { id:'2-4', label:'2-4', emoji:'🎯', pts:18, qType: 'borrow_10' },
+      { id:'2-5', label:'2-5', emoji:'🦁', pts:20, qType: 'mix_1digit' },
+      { id:'2-6', label:'2-6', emoji:'🎸', pts:22, qType: '2digit_1digit_no_borrow' },
+      { id:'2-7', label:'2-7', emoji:'🌙', pts:25, qType: '2digit_1digit_borrow' },
+      { id:'2-8', label:'2-8', emoji:'👑', pts:35, qType: 'mix_all' },
+    ]
+  }
+};
+
+const SHOP_ITEMS = [
+  { id:'hat',    emoji:'🎩', name:'まほうのぼうし', desc:'ちりょくが UP！',   price:40,  slot:'hat',    stat:{atk:10} },
+  { id:'sword',  emoji:'⚔️', name:'ひかりのけん',  desc:'こうげきが UP！',   price:60,  slot:'sword',  stat:{atk:20} },
+  { id:'shield', emoji:'🛡️', name:'てっぺいのたて', desc:'ぼうぎょが UP！', price:50,  slot:'shield', stat:{def:20} },
+  { id:'cape',   emoji:'🧣', name:'かぜのマント',   desc:'すばやさが UP！',  price:45,  slot:'cape',   stat:{atk:5,def:5} },
+  { id:'boots',  emoji:'👟', name:'スピードブーツ', desc:'どんどんすすめる！', price:35,  slot:'boots',  stat:{def:10} },
+  { id:'wand',   emoji:'🪄', name:'ほしのつえ',    desc:'まほうがつかえる！', price:80,  slot:'sword',  stat:{atk:30} },
+  { id:'crown',  emoji:'👑', name:'おうかん',       desc:'すべてが UP！',    price:120, slot:'hat',    stat:{atk:15,def:15} },
+  { id:'potion', emoji:'🧪', name:'せいちょうやく', desc:'HP が MAX に！',    price:30,  slot:'potion', stat:{hp:30} },
+];
+
+function genAdd(type) {
+  const qs = [];
+  let attempts = 0;
+  const addQ = (a, b) => {
+    const key = `${a}+${b}`;
+    if (!qs.some(item => item.key === key)) {
+      qs.push({ q: `${a} ＋ ${b} ＝`, ans: a + b, type: 'add', key });
+      return true;
+    }
+    return false;
+  };
+
+  while (qs.length < 5 && attempts < 1000) {
+    attempts++;
+    let a, b;
+    switch (type) {
+      case 'easy':
+        a = rand(1, 4);
+        b = rand(1, 4);
+        if (a + b <= 5) addQ(a, b);
+        break;
+      case 'medium_no_carry':
+        a = rand(1, 8);
+        b = rand(1, 8);
+        if (a + b <= 9) addQ(a, b);
+        break;
+      case 'make_10':
+        a = rand(1, 9);
+        b = 10 - a;
+        addQ(a, b);
+        break;
+      case 'carry_10':
+        a = rand(2, 9);
+        b = rand(2, 9);
+        if (a + b >= 11 && a + b <= 18) addQ(a, b);
+        break;
+      case 'mix_1digit':
+        if (Math.random() < 0.5) {
+          a = rand(1, 8);
+          b = rand(1, 8);
+          if (a + b <= 9) addQ(a, b);
+        } else {
+          a = rand(2, 9);
+          b = rand(2, 9);
+          if (a + b >= 11 && a + b <= 18) addQ(a, b);
+        }
+        break;
+      case '2digit_1digit_no_carry':
+        a = rand(11, 18);
+        b = rand(1, 8);
+        if ((a % 10) + b <= 9) addQ(a, b);
+        break;
+      case '2digit_1digit_carry':
+        a = rand(11, 18);
+        b = rand(1, 9);
+        if ((a % 10) + b >= 10) addQ(a, b);
+        break;
+      case 'mix_all':
+        const r = Math.random();
+        if (r < 0.3) {
+          a = rand(2, 9);
+          b = rand(2, 9);
+          if (a + b >= 11 && a + b <= 18) addQ(a, b);
+        } else if (r < 0.6) {
+          a = rand(11, 18);
+          b = rand(1, 8);
+          if ((a % 10) + b <= 9) addQ(a, b);
+        } else {
+          a = rand(11, 18);
+          b = rand(1, 9);
+          if ((a % 10) + b >= 10) addQ(a, b);
+        }
+        break;
+      default:
+        a = rand(1, 4);
+        b = rand(1, 4);
+        if (a + b <= 9) addQ(a, b);
+    }
+  }
+
+  while (qs.length < 5) {
+    const a = rand(1, 9);
+    const b = rand(1, 9);
+    addQ(a, b);
+  }
+  return qs.map(item => ({ q: item.q, ans: item.ans, type: item.type }));
+}
+
+function genSub(type) {
+  const qs = [];
+  let attempts = 0;
+  const addQ = (a, b) => {
+    const key = `${a}-${b}`;
+    if (!qs.some(item => item.key === key)) {
+      qs.push({ q: `${a} － ${b} ＝`, ans: a - b, type: 'sub', key });
+      return true;
+    }
+    return false;
+  };
+
+  while (qs.length < 5 && attempts < 1000) {
+    attempts++;
+    let a, b;
+    switch (type) {
+      case 'easy':
+        a = rand(2, 5);
+        b = rand(1, a - 1);
+        addQ(a, b);
+        break;
+      case 'medium_no_borrow':
+        a = rand(2, 9);
+        b = rand(1, a - 1);
+        addQ(a, b);
+        break;
+      case 'from_10':
+        a = 10;
+        b = rand(1, 9);
+        addQ(a, b);
+        break;
+      case 'borrow_10':
+        a = rand(11, 18);
+        b = rand(2, 9);
+        if ((a % 10) < b && a - b < 10 && a - b > 0) {
+          addQ(a, b);
+        }
+        break;
+      case 'mix_1digit':
+        if (Math.random() < 0.5) {
+          a = rand(2, 9);
+          b = rand(1, a - 1);
+          addQ(a, b);
+        } else {
+          a = rand(11, 18);
+          b = rand(2, 9);
+          if ((a % 10) < b && a - b < 10 && a - b > 0) {
+            addQ(a, b);
+          }
+        }
+        break;
+      case '2digit_1digit_no_borrow':
+        a = rand(11, 19);
+        b = rand(1, 9);
+        if ((a % 10) >= b && a - b >= 10) {
+          addQ(a, b);
+        }
+        break;
+      case '2digit_1digit_borrow':
+        a = rand(21, 28);
+        b = rand(2, 9);
+        if ((a % 10) < b && a - b >= 10) {
+          addQ(a, b);
+        }
+        break;
+      case 'mix_all':
+        const r = Math.random();
+        if (r < 0.3) {
+          a = rand(11, 18);
+          b = rand(2, 9);
+          if ((a % 10) < b && a - b < 10 && a - b > 0) {
+            addQ(a, b);
+          }
+        } else if (r < 0.6) {
+          a = rand(11, 19);
+          b = rand(1, 9);
+          if ((a % 10) >= b && a - b >= 10) {
+            addQ(a, b);
+          }
+        } else {
+          a = rand(21, 28);
+          b = rand(2, 9);
+          if ((a % 10) < b && a - b >= 10) {
+            addQ(a, b);
+          }
+        }
+        break;
+      default:
+        a = rand(2, 9);
+        b = rand(1, a - 1);
+        addQ(a, b);
+    }
+  }
+
+  while (qs.length < 5) {
+    const a = rand(2, 9);
+    const b = rand(1, a - 1);
+    addQ(a, b);
+  }
+  return qs.map(item => ({ q: item.q, ans: item.ans, type: item.type }));
+}
+
+function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+// ==================== STATE ====================
+let state = {
+  points: 0,
+  cleared: {},  // { '1-1': { stars:3, date:... }, ... }
+  owned: [],    // item ids
+  equipped: {}, // slot -> item id
+  baseStats: { hp:40, atk:20, def:10 }
+};
+
+function loadState(){
+  try {
+    const s = localStorage.getItem('sansuu_state');
+    if(s) state = {...state, ...JSON.parse(s)};
+  } catch(e){}
+}
+function saveState(){
+  localStorage.setItem('sansuu_state', JSON.stringify(state));
+}
+
+// ==================== GAME LOGIC ====================
+let currentStage = null;
+let currentQIdx = 0;
+let correctCount = 0;
+let inputValue = '';
+let questions = [];
+let answering = false;
+
+function startStage(worldId, stageIdx){
+  const world = STAGE_DATA[worldId];
+  currentStage = { worldId, stageIdx, data: world.stages[stageIdx] };
+  
+  const qType = currentStage.data.qType;
+  let rawQuestions = [];
+  if (worldId === 1) {
+    rawQuestions = genAdd(qType);
+  } else {
+    rawQuestions = genSub(qType);
+  }
+  
+  questions = shuffle([...rawQuestions]);
+  currentQIdx = 0;
+  correctCount = 0;
+  inputValue = '';
+  answering = false;
+  showScreen('gameScreen');
+  updateGameUI();
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function updateGameUI(){
+  const q = questions[currentQIdx];
+  document.getElementById('stageLabel').textContent = currentStage.data.label;
+  document.getElementById('gamePoints').textContent = state.points;
+  document.getElementById('qEmoji').textContent = currentStage.data.emoji;
+  document.getElementById('questionText').innerHTML = 
+    q.q + ' <span class="answer-box" id="answerBox">＿</span>';
+  inputValue = '';
+  answering = false;
+  document.getElementById('submitBtn').disabled = true;
+
+  // progress
+  const dots = document.getElementById('progressDots');
+  dots.innerHTML = '';
+  for(let i=0;i<questions.length;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<currentQIdx?' done':(i===currentQIdx?' current':''));
+    dots.appendChild(d);
+  }
+
+  const fb = document.getElementById('feedbackOverlay');
+  fb.className = 'feedback-overlay';
+}
+
+function inputNum(n){
+  if(answering) return;
+  if(inputValue.length >= 2) return;
+  inputValue += n;
+  const box = document.getElementById('answerBox');
+  box.textContent = inputValue;
+  box.classList.add('filled');
+  document.getElementById('submitBtn').disabled = false;
+}
+function deleteNum(){
+  if(answering) return;
+  inputValue = inputValue.slice(0,-1);
+  const box = document.getElementById('answerBox');
+  box.textContent = inputValue || '＿';
+  if(!inputValue) box.classList.remove('filled');
+  document.getElementById('submitBtn').disabled = !inputValue;
+}
+
+function submitAnswer(){
+  if(answering || !inputValue) return;
+  answering = true;
+  const q = questions[currentQIdx];
+  const correct = parseInt(inputValue) === q.ans;
+  const fb = document.getElementById('feedbackOverlay');
+
+  if(correct){
+    correctCount++;
+    fb.className = 'feedback-overlay correct show';
+    document.getElementById('feedbackEmoji').textContent = '⭕';
+    document.getElementById('feedbackText').textContent = 'せいかい！すごい！';
+    vibrate([50,30,50]);
+  } else {
+    fb.className = 'feedback-overlay wrong show';
+    document.getElementById('feedbackEmoji').textContent = '❌';
+    document.getElementById('feedbackText').textContent = `こたえは ${q.ans} だよ！`;
+    vibrate([200]);
+  }
+
+  setTimeout(()=>{
+    fb.className = 'feedback-overlay';
+    currentQIdx++;
+    if(currentQIdx >= questions.length){
+      stageClear();
+    } else {
+      updateGameUI();
+    }
+  }, 1200);
+}
+
+function vibrate(pattern){
+  try { navigator.vibrate && navigator.vibrate(pattern); } catch(e){}
+}
+
+function stageClear(){
+  const stars = correctCount >= 5 ? 3 : correctCount >= 4 ? 2 : correctCount >= 3 ? 1 : 0;
+  const pts = stars === 0 ? 0 : Math.round(currentStage.data.pts * (stars/3));
+  state.points += pts;
+
+  const sid = currentStage.data.id;
+  const prev = state.cleared[sid];
+  if(!prev || prev.stars < stars){
+    state.cleared[sid] = { stars, date: Date.now() };
+  }
+  saveState();
+
+  document.getElementById('starsEarned').textContent =
+    (stars>=1?'⭐':'☆') + (stars>=2?'⭐':'☆') + (stars>=3?'⭐':'☆');
+  document.getElementById('clearPoints').textContent = pts;
+
+  if(stars > 0) launchConfetti();
+  showScreen('clearScreen');
+  updateAllPoints();
+}
+
+function nextStage(){
+  const {worldId, stageIdx, data} = currentStage;
+  const world = STAGE_DATA[worldId];
+  if(stageIdx + 1 < world.stages.length){
+    startStage(worldId, stageIdx+1);
+  } else {
+    const nextWorld = worldId+1;
+    if(STAGE_DATA[nextWorld]){
+      startStage(nextWorld, 0);
+    } else {
+      showScreen('stageScreen');
+    }
+  }
+}
+
+// ==================== STAGE SELECT ====================
+function buildStageSelect(){
+  [1,2].forEach(wid=>{
+    const grid = document.getElementById(`world${wid}Grid`);
+    grid.innerHTML = '';
+    STAGE_DATA[wid].stages.forEach((s,idx)=>{
+      const btn = document.createElement('button');
+      const cleared = state.cleared[s.id];
+      const isFirst = wid===1 && idx===0;
+      const prevCleared = idx===0
+        ? (wid===1 ? true : state.cleared[STAGE_DATA[wid-1]?.stages[7]?.id])
+        : state.cleared[STAGE_DATA[wid].stages[idx-1]?.id];
+
+      const unlocked = isFirst || prevCleared;
+      btn.className = 'stage-btn ' + (cleared?'cleared':unlocked?'available':'locked');
+      btn.innerHTML = `
+        <span class="stage-num">${s.label}</span>
+        <span class="stage-icon">${cleared ? s.emoji : unlocked ? s.emoji : '🔒'}</span>
+        <span class="stage-stars">${cleared?('⭐'.repeat(cleared.stars)+(cleared.stars<3?'☆'.repeat(3-cleared.stars):'')):'☆☆☆'}</span>
+      `;
+      if(unlocked){
+        btn.onclick = () => startStage(wid, idx);
+      }
+      grid.appendChild(btn);
+    });
+  });
+}
+
+// ==================== SHOP ====================
+function buildShop(){
+  document.getElementById('shopPoints').textContent = state.points;
+  const grid = document.getElementById('shopGrid');
+  grid.innerHTML = '';
+  SHOP_ITEMS.forEach(item=>{
+    const owned = state.owned.includes(item.id);
+    const canAfford = state.points >= item.price;
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (owned?' owned':!canAfford?' cant-afford':'');
+    div.innerHTML = `
+      <div class="item-emoji">${item.emoji}</div>
+      <div class="item-name">${item.name}</div>
+      <div class="item-desc">${item.desc}</div>
+      <div class="item-price">⭐ ${item.price} pt</div>
+    `;
+    if(!owned && canAfford){
+      div.onclick = ()=> buyItem(item);
+    } else if(owned){
+      div.onclick = ()=> equipItem(item);
+    } else {
+      div.style.cursor='not-allowed';
+    }
+    grid.appendChild(div);
+  });
+}
+
+function buyItem(item){
+  if(state.points < item.price){ showToast('ポイントがたりない！'); return; }
+  state.points -= item.price;
+  state.owned.push(item.id);
+  equipItem(item, true);
+  saveState();
+  buildShop();
+  updateAllPoints();
+  showToast(`${item.name} をかった！ ${item.emoji}`);
+  launchConfetti();
+}
+
+function equipItem(item, silent=false){
+  state.equipped[item.slot] = item.id;
+  saveState();
+  updateHero();
+  if(!silent) showToast(`${item.name} をそうびした！`);
+}
+
+// ==================== HERO ====================
+function updateHero(){
+  let hp = state.baseStats.hp, atk = state.baseStats.atk, def = state.baseStats.def;
+  const chips = [];
+  const slotEls = {hat:'eqHat',sword:'eqSword',shield:'eqShield',cape:'eqCape',boots:'eqBoots'};
+
+  Object.values(slotEls).forEach(id => document.getElementById(id).textContent='');
+
+  Object.entries(state.equipped).forEach(([slot, itemId])=>{
+    const item = SHOP_ITEMS.find(i=>i.id===itemId);
+    if(!item) return;
+    if(item.stat.hp)  hp  = Math.min(100, hp  + item.stat.hp);
+    if(item.stat.atk) atk = Math.min(100, atk + item.stat.atk);
+    if(item.stat.def) def = Math.min(100, def + item.stat.def);
+    chips.push(`${item.emoji} ${item.name}`);
+    if(slotEls[slot]) document.getElementById(slotEls[slot]).textContent = item.emoji;
+  });
+
+  document.getElementById('statHp').style.width  = hp  + '%';
+  document.getElementById('statAtk').style.width = atk + '%';
+  document.getElementById('statDef').style.width = def + '%';
+  document.getElementById('statHpVal').textContent  = hp;
+  document.getElementById('statAtkVal').textContent = atk;
+  document.getElementById('statDefVal').textContent = def;
+
+  const el = document.getElementById('equippedList');
+  el.innerHTML = chips.length
+    ? chips.map(c=>`<span class="equipped-chip">${c}</span>`).join('')
+    : '<span style="color:#90A4AE;font-size:14px;">まだそうびなし</span>';
+}
+
+// ==================== NAV ====================
+const NAV_SCREENS = {
+  'nav-stage': 'stageScreen',
+  'nav-hero':  'heroScreen',
+  'nav-shop':  'shopScreen',
+};
+function navTo(screenId, navId){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(navId).classList.add('active');
+  showScreen(screenId);
+}
+
+// ==================== SCREEN ROUTING ====================
+const ALL_SCREENS = ['titleScreen','stageScreen','gameScreen','clearScreen','shopScreen','heroScreen'];
+const NAV_VISIBLE = ['stageScreen','heroScreen','shopScreen'];
+
+function showScreen(id){
+  ALL_SCREENS.forEach(s=>{
+    const el = document.getElementById(s);
+    el.classList.toggle('hidden', s!==id);
+  });
+  document.getElementById('bottomNav').style.display =
+    NAV_VISIBLE.includes(id) ? 'flex' : 'none';
+
+  if(id==='stageScreen') buildStageSelect();
+  if(id==='shopScreen')  buildShop();
+  if(id==='heroScreen')  updateHero();
+}
+
+function updateAllPoints(){
+  ['titlePoints','gamePoints','shopPoints'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = state.points;
+  });
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti(){
+  const c = document.getElementById('confetti');
+  c.innerHTML = '';
+  const colors = ['#FFD700','#FF6B35','#4FC3F7','#66BB6A','#AB47BC','#EC407A','#fff'];
+  for(let i=0;i<60;i++){
+    const el = document.createElement('div');
+    el.className = 'confetto';
+    el.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px;
+      height:${10+Math.random()*8}px;
+      animation-duration:${1.5+Math.random()*2}s;
+      animation-delay:${Math.random()*0.5}s;
+    `;
+    c.appendChild(el);
+  }
+  setTimeout(()=>{ c.innerHTML=''; }, 3500);
+}
+
+// ==================== TOAST ====================
+function showToast(msg){
+  const existing = document.querySelector('.toast');
+  if(existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2100);
+}
+
+// ==================== INIT ====================
+loadState();
+updateAllPoints();
+updateHero();
+</script>
+</body>
+</html>
